@@ -1,0 +1,8 @@
+<resources>
+    <string name="app_name">VKCommerce</string>
+    <string name="vk_commerce_logo">VK Commerce Logo</string>
+    <string name="login">Login</string>
+    <string name="register">Register</string>
+    <string name="email">Email</string>
+    <string name="password">Password</string>
+</resources>

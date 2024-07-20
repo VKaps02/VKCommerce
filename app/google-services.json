@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "219811086931",
+    "project_id": "vkcommerce-ea240",
+    "storage_bucket": "vkcommerce-ea240.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:219811086931:android:c1ff0501f223c0b10cbca6",
+        "android_client_info": {
+          "package_name": "com.app.vkcommerce"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDMcVV9Yv-WayOCKXtaQXCDIljv58wGWpA"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
