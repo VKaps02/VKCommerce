@@ -12,19 +12,31 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
+import androidx.recyclerview.widget.RecyclerView;
 
 import com.app.vkcommerce.R;
+import com.app.vkcommerce.adapter.ProductAdapter;
+import com.app.vkcommerce.model.Product;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.Firebase;
 import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.firestore.EventListener;
 import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.FirebaseFirestoreException;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
 import com.google.firebase.firestore.QuerySnapshot;
+
+import java.util.ArrayList;
+import java.util.List;
+
+import javax.annotation.Nullable;
 
 public class HomeActivity extends AppCompatActivity {
 
     FirebaseFirestore db = FirebaseFirestore.getInstance();
+    RecyclerView rcProducts;
+    ProductAdapter adapter = new ProductAdapter(new ArrayList<>());
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -36,6 +48,8 @@ public class HomeActivity extends AppCompatActivity {
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom);
             return insets;
         });
+        rcProducts = findViewById(R.id.rc_products);
+        rcProducts.setAdapter(adapter);
         Button btnLogout = findViewById(R.id.buttonLogout);
         btnLogout.setOnClickListener(view -> {
             FirebaseAuth.getInstance().signOut();
@@ -47,18 +61,18 @@ public class HomeActivity extends AppCompatActivity {
 
     private void fetchProducts() {
         db.collection("products")
-                .get()
-                .addOnCompleteListener(new OnCompleteListener<QuerySnapshot>() {
-                    @Override
-                    public void onComplete(@NonNull Task<QuerySnapshot> task) {
-                        if (task.isSuccessful()) {
-                            for (QueryDocumentSnapshot document : task.getResult()) {
-                                Log.d("SRD", document.getId() + " => " + document.getData());
-                            }
-                        } else {
-                            Log.w("SRD", "Error getting documents.", task.getException());
-                        }
+                .addSnapshotListener((value, e) -> {
+                    if (e != null) {
+                        Log.w("SRD", "Listen failed.", e);
+                        return;
                     }
+
+                    List<Product> products = new ArrayList<>();
+                    if (value != null) {
+                        products = value.toObjects(Product.class); // Serialization from Firestore to Our Class
+                        adapter.setProducts(products);
+                    }
+                    Log.d("SRD", "Current cites in CA: " + products);
                 });
 
     }
