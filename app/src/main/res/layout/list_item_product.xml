@@ -1,13 +1,16 @@
 <?xml version="1.0" encoding="utf-8"?>
 <com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
+    style="?attr/materialCardViewElevatedStyle"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_margin="8dp">
 
     <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
-        android:layout_height="wrap_content">
+        android:layout_height="wrap_content"
+        android:paddingBottom="16dp">
 
         <ProgressBar
             android:layout_width="match_parent"
@@ -32,9 +35,46 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_margin="16dp"
+            tools:text="Product name"
             android:textAppearance="?attr/textAppearanceTitleMedium"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@id/image" />
+
+        <ImageButton
+            android:id="@+id/btnAdd"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:contentDescription="@string/add_product"
+            android:src="@drawable/baseline_add_circle_outline_24"
+            android:layout_marginEnd="16dp"
+            android:backgroundTint="#05FFFFFF"
+            app:tint="@color/md_theme_primary"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/name" />
+
+        <TextView
+            android:id="@+id/txtQty"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginEnd="6dp"
+            android:textSize="16sp"
+            tools:text="10"
+            app:layout_constraintEnd_toStartOf="@id/btnAdd"
+            app:layout_constraintTop_toTopOf="@id/btnAdd"
+            app:layout_constraintBottom_toBottomOf="@id/btnAdd"/>
+
+        <ImageButton
+            android:id="@+id/btnRemove"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:contentDescription="@string/add_product"
+            android:src="@drawable/baseline_remove_circle_outline"
+            app:tint="@color/md_theme_primary"
+            android:backgroundTint="#05FFFFFF"
+            android:layout_marginEnd="6dp"
+            app:layout_constraintEnd_toStartOf="@id/txtQty"
+            app:layout_constraintTop_toTopOf="@id/btnAdd"
+            app:layout_constraintBottom_toBottomOf="@id/btnAdd" />
     </androidx.constraintlayout.widget.ConstraintLayout>
 
 </com.google.android.material.card.MaterialCardView>

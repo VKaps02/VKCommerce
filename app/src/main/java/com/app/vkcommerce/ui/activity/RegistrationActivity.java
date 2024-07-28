@@ -7,19 +7,17 @@ import android.widget.Button;
 import android.widget.Toast;
 
 import androidx.activity.EdgeToEdge;
-import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 
 import com.app.vkcommerce.R;
-import com.google.android.gms.tasks.OnCompleteListener;
-import com.google.android.gms.tasks.Task;
+import com.app.vkcommerce.model.User;
 import com.google.android.material.textfield.TextInputEditText;
-import com.google.firebase.auth.AuthResult;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.firestore.FirebaseFirestore;
 
 import java.util.Objects;
 
@@ -69,6 +67,7 @@ public class RegistrationActivity extends AppCompatActivity {
                         // Sign in success, update UI with the signed-in user's information
                         Log.d("SRD", "createUserWithEmail:success");
                         FirebaseUser user = mAuth.getCurrentUser();
+                        //createUserCollection(user);
                         startHomeActivity();
                     } else {
                         // If sign in fails, display a message to the user.
@@ -77,6 +76,12 @@ public class RegistrationActivity extends AppCompatActivity {
                                 Toast.LENGTH_SHORT).show();
                     }
                 });
+    }
+
+    private void createUserCollection(FirebaseUser user) {
+        FirebaseFirestore db = FirebaseFirestore.getInstance();
+        db.collection("users").document(user.getUid())
+                .set(new User(user.getUid(), user.getEmail()));
     }
 
     private void startHomeActivity() {

@@ -5,6 +5,7 @@ import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
+import android.widget.Toast;
 
 import androidx.activity.EdgeToEdge;
 import androidx.annotation.NonNull;
@@ -16,8 +17,11 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.app.vkcommerce.R;
 import com.app.vkcommerce.adapter.ProductAdapter;
+import com.app.vkcommerce.model.CartItem;
 import com.app.vkcommerce.model.Product;
 import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.OnFailureListener;
+import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.Firebase;
 import com.google.firebase.auth.FirebaseAuth;
@@ -28,15 +32,19 @@ import com.google.firebase.firestore.QueryDocumentSnapshot;
 import com.google.firebase.firestore.QuerySnapshot;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import javax.annotation.Nullable;
 
-public class HomeActivity extends AppCompatActivity {
+public class HomeActivity extends AppCompatActivity implements ProductAdapter.ProductAdapterListener {
 
     FirebaseFirestore db = FirebaseFirestore.getInstance();
     RecyclerView rcProducts;
-    ProductAdapter adapter = new ProductAdapter(new ArrayList<>());
+    ProductAdapter adapter = new ProductAdapter(new ArrayList<>(), this);
+    //List<Product> products = new ArrayList<>();
+    Map<String, Product> products = new HashMap<>();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -67,13 +75,127 @@ public class HomeActivity extends AppCompatActivity {
                         return;
                     }
 
-                    List<Product> products = new ArrayList<>();
                     if (value != null) {
-                        products = value.toObjects(Product.class); // Serialization from Firestore to Our Class
-                        adapter.setProducts(products);
+                        for (QueryDocumentSnapshot doc : value) {
+                            Product product = doc.toObject(Product.class);
+                            product.setDocId(doc.getId());
+                            products.put(doc.getId(), product);
+                        }
+                        fetchUserCart();
                     }
                     Log.d("SRD", "Current cites in CA: " + products);
                 });
 
+    }
+
+    private void fetchUserCart() {
+        String userId = FirebaseAuth.getInstance().getUid();
+        if (userId != null) {
+            db.collection("users").document(userId)
+                    .collection("userCart")
+                    .get()
+                    .addOnCompleteListener(new OnCompleteListener<QuerySnapshot>() {
+                        @Override
+                        public void onComplete(@NonNull Task<QuerySnapshot> task) {
+                            if (task.isSuccessful()) {
+                                for (QueryDocumentSnapshot document : task.getResult()) {
+                                    Log.d("SRD", document.getId() + " => " + document.getData());
+                                    CartItem cartItem = document.toObject(CartItem.class);
+                                    Product product = products.get(cartItem.getDocId());
+                                    if (product != null) {
+                                        if (cartItem.getOrderQty() > product.getStockQty()) {
+                                            product.setOrderQty(product.getStockQty());
+                                        } else {
+                                            product.setOrderQty(cartItem.getOrderQty());
+                                        }
+                                        products.put(document.getId(), product);
+                                    }
+                                }
+                                adapter.setProducts(new ArrayList<Product>(products.values()));
+                                Log.d("SRD", "Product list : " + products);
+                            } else {
+                                Log.d("SRD", "Error getting documents: ", task.getException());
+                            }
+                        }
+                    });
+        } else {
+            Toast.makeText(this, "Please login", Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    @Override
+    public void onProductClick(Product product) {
+
+    }
+
+    @Override
+    public void onAddClick(Product product, int position) {
+        String userId = FirebaseAuth.getInstance().getUid();
+        if (userId != null) {
+            if (product.getStockQty() > product.getOrderQty()) {
+                product.setOrderQty(product.getOrderQty() + 1);
+                adapter.notifyItemChanged(position);
+                CartItem cartItem = new CartItem(product.getId(), product.getDocId(), product.getOrderQty());
+
+                db.collection("users").document(userId)
+                        .collection("userCart").document(product.getDocId())
+                        .set(cartItem)
+                        .addOnSuccessListener(aVoid -> {
+                        })
+                        .addOnFailureListener(e -> {
+                            Log.w("SRD", "Error writing document", e);
+                            product.setOrderQty(product.getOrderQty() - 1);
+                            adapter.notifyItemChanged(position);
+                        });
+            } else {
+                Toast.makeText(this, "Only " + product.getStockQty() + " left", Toast.LENGTH_SHORT).show();
+            }
+        } else {
+            Toast.makeText(this, "Please login", Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    @Override
+    public void onRemoveClick(Product product, int position) {
+        String userId = FirebaseAuth.getInstance().getUid();
+        if (userId != null) {
+            if (product.getOrderQty() > 1) {
+                product.setOrderQty(product.getOrderQty() - 1);
+                adapter.notifyItemChanged(position);
+                CartItem cartItem = new CartItem(product.getId(), product.getDocId(), product.getOrderQty());
+                db.collection("users").document(userId)
+                        .collection("userCart").document(product.getDocId())
+                        .set(cartItem)
+                        .addOnSuccessListener(aVoid -> {
+                        })
+                        .addOnFailureListener(e -> {
+                            Log.w("SRD", "Error writing document", e);
+                            product.setOrderQty(product.getOrderQty() + 1);
+                            adapter.notifyItemChanged(position);
+                        });
+            } else if (product.getOrderQty() == 1) {
+                product.setOrderQty(product.getOrderQty() - 1);
+                adapter.notifyItemChanged(position);
+                db.collection("users").document(userId)
+                        .collection("userCart").document(product.getDocId())
+                        .delete()
+                        .addOnSuccessListener(new OnSuccessListener<Void>() {
+                            @Override
+                            public void onSuccess(Void aVoid) {
+                                Log.d("SRD", "DocumentSnapshot successfully deleted!");
+                            }
+                        })
+                        .addOnFailureListener(new OnFailureListener() {
+                            @Override
+                            public void onFailure(@NonNull Exception e) {
+                                Log.w("SRD", "Error deleting document", e);
+                                product.setOrderQty(product.getOrderQty() + 1);
+                                adapter.notifyItemChanged(position);
+                            }
+                        });
+            }
+        } else {
+            Toast.makeText(this, "Please login", Toast.LENGTH_SHORT).show();
+        }
     }
 }

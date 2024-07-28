@@ -7,4 +7,5 @@
     <string name="password">Password</string>
     <string name="logout">Logout</string>
     <string name="product_image">Product Image</string>
+    <string name="add_product">Add product</string>
 </resources>
